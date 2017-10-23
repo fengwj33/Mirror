@@ -56,13 +56,24 @@ def startuserlistener(proxysocketdic,userport,proxyport,port):
         print("userlistener:\t"+str(userport)+"\t\t[success]")
         print("userlistener:\t"+str(userport)+"\t\t[startproxy]")
         socketFW.socketForward(clientsocket,proxysocket)
-        
+
+def socketdaemon():
+    global devicesocket
+    while True:
+        if devicesocket==None:
+            time.sleep(1)
+            continue
+        data=devicesocket.recv(1024)
+        if len(data)==0:
+            print("#device#\t\t\t[removed]")
+            devicesocket=None
 
 devicesocket=None
 fcfg=open('servercfg.json', 'r')
 cfg= json.load(fcfg)
 bindcfg=cfg["portbinds"]
 threading.Thread(target=startdevicelistener,args=(cfg,)).start()
+threading.Thread(target=socketdaemon,args=()).start()
 proxysocketdic={}
 for key in bindcfg:
     proxyport=int(bindcfg[key][0])#device connect to this port

@@ -6,11 +6,23 @@ import time
 import socketmsg
 import json
 import pickle
-def startproxy(rcv,host,port):
-    snd=socket.socket(socket.AF_INET,socket.SOCK_STREAM)
-    snd.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-    snd.connect((host,port))
-    socketFW.socketForward(rcv,snd)
+def startproxy(localport, remotehost, remoteport):
+    remotesocket=socket.socket(socket.AF_INET,socket.SOCK_STREAM)
+    remotesocket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+    try:
+        remotesocket.connect((remotehost, remoteport))
+    except ConnectionRefusedError:
+        print("ConnectionRefused")
+        return
+    localsocket=socket.socket(socket.AF_INET,socket.SOCK_STREAM)
+    localsocket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+    try:
+        localsocket.connect(("127.0.0.1",localport))
+    except ConnectionRefusedError:
+        print("localport: ConnectionRefused")
+        remotesocket.close()
+        return
+    socketFW.socketForward(localsocket,remotesocket)
 
 fcfg=open('clientcfg.json', 'r')
 cfg= json.load(fcfg)
@@ -31,11 +43,10 @@ while True:
         if len(data)==0:
             break
         linkmsg=pickle.loads(data)
-        proxyhost=host
-        proxyport=int(linkmsg["proxyport"])
-        proxysocket=socket.socket(socket.AF_INET,socket.SOCK_STREAM)
-        proxysocket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        proxysocket.connect((proxyhost,proxyport))
-        startproxy(proxysocket,"127.0.0.1",int(linkmsg["port"]))
+        localport=int(linkmsg["port"])
+        remotehost=host
+        remoteport=int(linkmsg["proxyport"])
+        threading.Thread(target=startproxy,args=(localport, remotehost, remoteport,)).start()
+
     print("ConnectionClosed")
     proxysocket.close()
