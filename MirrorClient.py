@@ -49,4 +49,4 @@ while True:
         threading.Thread(target=startproxy,args=(localport, remotehost, remoteport,)).start()
 
     print("ConnectionClosed")
-    proxysocket.close()
+    req.close()
