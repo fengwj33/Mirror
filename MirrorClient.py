@@ -18,8 +18,10 @@ def startproxy(localport, remotehost, remoteport):
     localsocket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
     try:
         localsocket.connect(("127.0.0.1",localport))
+        socketmsg.send(remotesocket,pickle.dumps("success"))
     except ConnectionRefusedError:
         print("localport: ConnectionRefused")
+        socketmsg.send(remotesocket,pickle.dumps("refused"))
         remotesocket.close()
         return
     socketFW.socketForward(localsocket,remotesocket)

@@ -53,9 +53,15 @@ def startuserlistener(proxysocketdic,userport,proxyport,port):
         while proxysocketdic[proxyport].empty()==True:
             time.sleep(0.1)
         proxysocket=proxysocketdic[proxyport].get()
-        print("userlistener:\t"+str(userport)+"\t\t[success]")
-        print("userlistener:\t"+str(userport)+"\t\t[startproxy]")
-        socketFW.socketForward(clientsocket,proxysocket)
+        cstatus=pickle.loads(socketmsg.rcv(proxysocket))
+        #print(cstatus)
+        if cstatus!="success":
+            print("userlistener:\t"+str(userport)+"\t\t[refused]")
+            clientsocket.close()
+        else:
+            print("userlistener:\t"+str(userport)+"\t\t[success]")
+            print("userlistener:\t"+str(userport)+"\t\t[startproxy]")
+            socketFW.socketForward(clientsocket,proxysocket)
 
 def socketdaemon():
     global devicesocket
